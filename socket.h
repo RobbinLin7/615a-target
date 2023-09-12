@@ -2,9 +2,11 @@
 #define _SOCKET_H_
 #include<sys/socket.h>
 #include<netinet/in.h>
+#include<arpa/inet.h>
 #include<iostream>
 #include<unistd.h>
 const size_t max_bytes = 512;
+void func(sockaddr_in* addr);
 class udp_socket{
 public:
     udp_socket(){
@@ -25,21 +27,36 @@ public:
         return ::bind(sockfd, (sockaddr*)&server_addr, sizeof(server_addr));
     }
     ssize_t recvfrom(int flags){
-        return ::recvfrom(sockfd, buff, max_bytes, flags, &from, &addrlen);
+        ::recvfrom(sockfd, buff, max_bytes, flags, (sockaddr*)&from, &addrlen);
+        char ip_address[256];
+        if(inet_ntop(AF_INET, &(from.sin_addr), ip_address, INET_ADDRSTRLEN) == NULL){
+            throw std::exception();
+        }
+        printf("IPv4 地址: %s\n", ip_address);
+        return 1;
     }
 
     ssize_t sendto(int nbytes, int flags, const sockaddr* to, socklen_t addrlen){
         return ::sendto(sockfd, buff, nbytes, flags, to, addrlen);
     }
+
+    sockaddr_in* getFrom() const{
+        return &from;
+    }
+
+    std::string getBuff(){
+        return std::string(buff);
+    }
 private:
     int sockfd;
-    sockaddr from;
-    socklen_t addrlen;
+    mutable sockaddr_in from;
+    socklen_t addrlen = sizeof(sockaddr);
     char buff[max_bytes];
 };
 
 
 class tcp_socket{
+
 
 };
 #endif

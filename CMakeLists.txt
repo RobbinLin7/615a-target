@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.15)
 # set the project name
 project(615A_Target)
 
-SET(SRC_LIST main.cpp)
+SET(SRC_LIST main.cpp arinc615a.cpp tftp.cpp)
 
 
 # add the executable
