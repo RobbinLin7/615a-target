@@ -1,5 +1,5 @@
 #include "tftp.h"
-void tftp::makeTftpAckPacket(std::string& ack, ack_t ackNo){
+void tftp::makeTftpAckPacket(std::string& ack, block_t ackNo){
     //1.opcode
     ack.push_back('\0');
     ack.push_back(static_cast<char>(4));
@@ -37,13 +37,35 @@ void tftp::receiveFile(std::string &fileName){
 
 }
 
-ack_t tftp::parseTftpAckPacket(std::string &ack)
+tftp::tftpType tftp::parseTftpPacket(std::string &tftpPacket, std::string& fileName, std::string& mode, block_t& num)
 {   
-    ack_t ackNo;
-    if(ack[0] != '\0' || ack[1] != '\4'){
-        throw std::exception();
+    tftpType type;
+    switch (tftpPacket[1]){
+    case '\1':
+        /* code */
+        type = tftpReadRequest;
+        //substr遇到\0字符会自动终止
+        fileName = tftpPacket.substr(2);
+        mode = tftpPacket.substr(2 + fileName.size() + 1);
+        break;
+    case '\2':
+        type = tftpWriteRequest;
+        fileName = tftpPacket.substr(2);
+        mode = tftpPacket.substr(2 + fileName.size() + 1);
+    case '\3':
+        type = tftpData;
+        num = (tftpPacket[2] << 8) + tftpPacket[3]; 
+    case '\4':
+        type = tftpAck;
+        num = (tftpPacket[2] << 8) + tftpPacket[3]; 
+    case '\5':
+        type = tftpError;
+        break;
+    default:
+        type = undefined;
+        break;
     }
-    return (ack[2] << 8) + ack[3];
+    return type;
 }
 
 void tftp::makeTftpDataPacket(std::string &tftpDataPacket, std::string &data, block_t blockNo){
@@ -57,7 +79,7 @@ void tftp::makeTftpDataPacket(std::string &tftpDataPacket, std::string &data, bl
     tftpDataPacket.append(data);
 }
 
-void tftp::makeTftpReadReuqestPacket(std::string &tftpReadRequestPacket, std::string fileName, std::string mode = "OCTET")
+void tftp::makeTftpReadReuqestPacket(std::string &tftpReadRequestPacket, std::string fileName, std::string mode)
 {
     //1.opcode
     tftpReadRequestPacket.push_back('\0');
@@ -68,7 +90,7 @@ void tftp::makeTftpReadReuqestPacket(std::string &tftpReadRequestPacket, std::st
     tftpReadRequestPacket.append(mode.c_str());
 }
 
-void tftp::makeTftpWriteRequestPacket(std::string& tftpWriteRequestPacket, std::string fileName, std::string mode = "OCTET"){
+void tftp::makeTftpWriteRequestPacket(std::string& tftpWriteRequestPacket, std::string fileName, std::string mode){
     //1.opcode
     tftpWriteRequestPacket.push_back('\0');
     tftpWriteRequestPacket.push_back('\2');

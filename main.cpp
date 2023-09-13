@@ -2,6 +2,7 @@
 #include "locker.h"
 #include "thread.h"
 #include "socket.h"
+#include "tftp.h"
 #include "arinc615a.h"
 #include<iostream>
 void* initTftpServer(void*){
@@ -31,9 +32,15 @@ void* initfindServer(void*){
         std::cerr << "bind error" << std::endl;
         throw std::exception();
     }
+    using namespace std;
+    string tftpRequest;
+    string fileName, mode;
+    block_t num;
     for(;;){
         usocket.recvfrom(0);
+        tftpRequest = usocket.getBuff();
         //func(&usocket.getFrom());
+        tftp::parseTftpPacket(tftpRequest, fileName, mode, num);
         Arinc615a arinc615a(usocket.getFrom());
         arinc615a.information();
     }
