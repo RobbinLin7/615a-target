@@ -2,17 +2,14 @@
 #include "locker.h"
 #include "thread.h"
 #include "socket.h"
-#include "tftp.h"
+#include "tftpserver.h"
 #include "arinc615a.h"
 #include<iostream>
+#include<fstream>
+#include<regex>
 void* initTftpServer(void*){
-    //std::cout << "hello world " << pthread_self() << std::endl;
-    udp_socket usocket;
-    if(usocket.bind(69) < 0){
-        std::cerr << "bind error" << std::endl;
-        throw std::exception();
-    }
-    usocket.recvfrom(0);
+    TftpServer* server = TftpServer::getTFTPServerInstance();
+    server->startTftpServer();
     return NULL;
 }
 
@@ -32,17 +29,16 @@ void* initfindServer(void*){
         std::cerr << "bind error" << std::endl;
         throw std::exception();
     }
-    using namespace std;
-    string tftpRequest;
-    string fileName, mode;
-    block_t num;
+    char buf[512];
     for(;;){
         usocket.recvfrom(0);
-        tftpRequest = usocket.getBuff();
-        //func(&usocket.getFrom());
-        tftp::parseTftpPacket(tftpRequest, fileName, mode, num);
-        Arinc615a arinc615a(usocket.getFrom());
-        arinc615a.information();
+        std::ifstream ifs("../tmp/find.bin");
+        while(ifs){
+            ifs.read(buf, 512);
+            size_t count = ifs.gcount();
+            usocket.sendto(buf, count, 0);
+        }
+        ifs.close();
     }
     return NULL;
 }

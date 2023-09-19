@@ -27,17 +27,21 @@ public:
         return ::bind(sockfd, (sockaddr*)&server_addr, sizeof(server_addr));
     }
     ssize_t recvfrom(int flags){
-        ::recvfrom(sockfd, buff, max_bytes, flags, (sockaddr*)&from, &addrlen);
-        char ip_address[256];
-        if(inet_ntop(AF_INET, &(from.sin_addr), ip_address, INET_ADDRSTRLEN) == NULL){
-            throw std::exception();
-        }
-        printf("IPv4 地址: %s\n", ip_address);
-        return 1;
+        
+        // char ip_address[256];
+        // if(inet_ntop(AF_INET, &(from.sin_addr), ip_address, INET_ADDRSTRLEN) == NULL){
+        //     throw std::exception();
+        // }
+        // printf("IPv4 地址: %s\n", ip_address); 
+        return count = ::recvfrom(sockfd, buff, max_bytes, flags, (sockaddr*)&from, &addrlen);
     }
 
-    ssize_t sendto(int nbytes, int flags, const sockaddr* to, socklen_t addrlen){
+    ssize_t sendto(const char* buff, int nbytes, int flags, const sockaddr* to, socklen_t addrlen){
         return ::sendto(sockfd, buff, nbytes, flags, to, addrlen);
+    }
+
+    ssize_t sendto(const char* buff, int nbytes, int flags){
+        return ::sendto(sockfd, buff, nbytes, flags, (sockaddr*)&from, sizeof(sockaddr_in));
     }
 
     sockaddr_in* getFrom() const{
@@ -45,13 +49,14 @@ public:
     }
 
     std::string getBuff(){
-        return std::string(buff);
+        return std::string(buff, count);
     }
 private:
     int sockfd;
     mutable sockaddr_in from;
     socklen_t addrlen = sizeof(sockaddr);
     char buff[max_bytes];
+    ssize_t count;
 };
 
 
