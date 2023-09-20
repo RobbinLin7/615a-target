@@ -32,10 +32,13 @@ void* initfindServer(void*){
     char buf[512];
     for(;;){
         usocket.recvfrom(0);
+        std::cout << "hahah" << std::endl;
         std::ifstream ifs("../tmp/find.bin");
         while(ifs){
+            std::cout << "hahah" << std::endl;
             ifs.read(buf, 512);
             size_t count = ifs.gcount();
+            std::cout << "count:" << count << std::endl;
             usocket.sendto(buf, count, 0);
         }
         ifs.close();

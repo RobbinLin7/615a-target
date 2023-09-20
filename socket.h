@@ -37,6 +37,7 @@ public:
     }
 
     ssize_t sendto(const char* buff, int nbytes, int flags, const sockaddr* to, socklen_t addrlen){
+        func((sockaddr_in*)to);
         return ::sendto(sockfd, buff, nbytes, flags, to, addrlen);
     }
 
