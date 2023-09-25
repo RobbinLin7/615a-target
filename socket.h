@@ -1,20 +1,44 @@
 #ifndef _SOCKET_H_
 #define _SOCKET_H_
+#include<iostream>
+
+#ifdef _WIN32
+#include<winsock2.h>
+#include<windows.h>
+#pragma comment(lib,"ws2_32.lib")
+typedef struct sockaddr_in sockaddr_in;
+typedef struct WSAData WSAData;
+typedef struct sockaddr sockaddr;
+typedef int socklen_t;
+#define MY_CLOSE_SOCKET(s) closesocket(s)
+#endif // 
+
+
+#ifdef UNIX
 #include<sys/socket.h>
 #include<netinet/in.h>
 #include<arpa/inet.h>
-#include<iostream>
 #include<unistd.h>
+#define MY_CLOSE_SOCKET(s) close(s)
+#endif // 
+
 const size_t max_bytes = 512;
 void func(sockaddr_in* addr);
 class udp_socket{
 public:
     udp_socket(){
+#ifdef _WIN32
+        WSADATA wsaData;
+        if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+            // 处理初始化失败的情况
+            throw std::exception();
+        }
+#endif
         sockfd = socket(AF_INET, SOCK_DGRAM, 0); 
         std::cout << sockfd << std::endl;
     }
     ~udp_socket(){
-        close(sockfd);
+        MY_CLOSE_SOCKET(sockfd);
     }
     int connect(const sockaddr* serveraddr, socklen_t addrlen){
         return ::connect(sockfd, serveraddr, addrlen);
@@ -26,7 +50,7 @@ public:
         server_addr.sin_port = htons(port);
         return ::bind(sockfd, (sockaddr*)&server_addr, sizeof(server_addr));
     }
-    ssize_t recvfrom(int flags){
+    int recvfrom(int flags){
         
         // char ip_address[256];
         // if(inet_ntop(AF_INET, &(from.sin_addr), ip_address, INET_ADDRSTRLEN) == NULL){
@@ -36,12 +60,12 @@ public:
         return count = ::recvfrom(sockfd, buff, max_bytes, flags, (sockaddr*)&from, &addrlen);
     }
 
-    ssize_t sendto(const char* buff, int nbytes, int flags, const sockaddr* to, socklen_t addrlen){
+    int sendto(const char* buff, int nbytes, int flags, const sockaddr* to, socklen_t addrlen){
         func((sockaddr_in*)to);
         return ::sendto(sockfd, buff, nbytes, flags, to, addrlen);
     }
 
-    ssize_t sendto(const char* buff, int nbytes, int flags){
+    int sendto(const char* buff, int nbytes, int flags){
         return ::sendto(sockfd, buff, nbytes, flags, (sockaddr*)&from, sizeof(sockaddr_in));
     }
 
@@ -57,7 +81,7 @@ private:
     mutable sockaddr_in from;
     socklen_t addrlen = sizeof(sockaddr);
     char buff[max_bytes];
-    ssize_t count;
+    int count;
 };
 
 

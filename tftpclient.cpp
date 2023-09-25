@@ -14,21 +14,27 @@ void TftpClient::sendFile(const std::string &fileName, const sockaddr_in *target
         else if(num != 0){
             socket.sendto(tftpPacket.c_str(), tftpPacket.size(), 0, (sockaddr*)targetAddr, sizeof(sockaddr_in));
         }
+        else {
+            break;
+        }
     }
     block_t blockNo = 1;
     char buf[max_tftp_data_len];
     std::ifstream fin;
     try{
-        fin.open("../tmp" + fileName);
+        fin.open("./tmp/" + fileName);
         size_t count = 1;
         do{
             fin.read(buf, max_tftp_data_len);
             count = fin.gcount();
+            
             std::string data(buf, count);
+            std::cout << data.size() << std::endl;
             std::string tftpDataPacket;
             makeTftpDataPacket(tftpDataPacket, data, blockNo);
             //这里使用static_cast会报错
-            socket.sendto(tftpDataPacket.c_str(), count, 0, reinterpret_cast<const sockaddr*>(targetAddr), sizeof(sockaddr));
+            //socket.sendto(tftpDataPacket.c_str(), count, 0, reinterpret_cast<const sockaddr*>(targetAddr), sizeof(sockaddr));
+            socket.sendto(tftpDataPacket.c_str(), count + 4, 0);
             
             for(;;){
                 socket.recvfrom(0);
@@ -38,9 +44,12 @@ void TftpClient::sendFile(const std::string &fileName, const sockaddr_in *target
                     std::cout << "not ack type" << std::endl;
                 }
                 else if(num != blockNo){
-                    socket.sendto(tftpDataPacket.c_str(), count, 0, reinterpret_cast<const sockaddr*>(targetAddr), sizeof(sockaddr));
+                    socket.sendto(tftpDataPacket.c_str(), count, 0);
                 }
-                else break;
+                else {
+                    std::cout << "hhhh" << std::endl;
+                    break;
+                }
             }
             ++blockNo;
         }while(fin && count == max_tftp_data_len);

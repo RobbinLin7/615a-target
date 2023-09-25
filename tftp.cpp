@@ -67,7 +67,7 @@ void Tftp::makeTftpWriteRequestPacket(std::string &tftpWriteRequestPacket, std::
     tftpWriteRequestPacket.push_back('\0');
     //3.mode
     tftpWriteRequestPacket.append(mode.c_str());
-    //tftpWriteRequestPacket.push_back('\0');
+    tftpWriteRequestPacket.push_back('\0');
 }
 
 void Tftp::makeTftpAckPacket(std::string &ack, block_t ackNo)

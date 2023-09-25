@@ -1,9 +1,9 @@
-#define UNIX
-#include "locker.h"
-#include "thread.h"
+//#include "locker.h"
 #include "socket.h"
+#include "thread.h"
+
 #include "tftpserver.h"
-#include "arinc615a.h"
+//#include "arinc615a.h"
 #include<iostream>
 #include<fstream>
 #include<regex>
@@ -15,11 +15,11 @@ void* initTftpServer(void*){
 
 void func(sockaddr_in* addr){
     //sockaddr_in* addr_in = (sockaddr_in*)addr;
-    char ip_address[256];
-    if(inet_ntop(AF_INET, &(addr->sin_addr), ip_address, INET_ADDRSTRLEN) == NULL){
-        throw std::exception();
-    }
-    printf("IPv4 地址: %s\n", ip_address);
+    //char ip_address[256];
+    //if(inet_ntop(AF_INET, &(addr->sin_addr), ip_address, INET_ADDRSTRLEN) == NULL){
+        //throw std::exception();
+    //}
+    //printf("IPv4 地址: %s\n", ip_address);
 }
 
 void* initfindServer(void*){
@@ -33,7 +33,11 @@ void* initfindServer(void*){
     for(;;){
         usocket.recvfrom(0);
         std::cout << "hahah" << std::endl;
+#ifdef _WIN32
+        std::ifstream ifs("./tmp/find.bin");
+#elif
         std::ifstream ifs("../tmp/find.bin");
+#endif
         while(ifs){
             std::cout << "hahah" << std::endl;
             ifs.read(buf, 512);
@@ -46,9 +50,18 @@ void* initfindServer(void*){
     return NULL;
 }
 
+DWORD func(LPVOID) {
+    std::cout << "hello world123456\n";
+    return 1;
+}
+
 
 int main(){
-    thread tftpServer_thread(initTftpServer);
-    thread findServer_thread(initfindServer);
+    thread tftpServer_thread((MyThreadFunction)initTftpServer);
+    thread findServer_thread((MyThreadFunction)initfindServer);
+    //Sleep(100000);
+    //thread thread(func);
+    WaitForSingleObject(tftpServer_thread.getHandle(), INFINITE);
+    WaitForSingleObject(findServer_thread.getHandle(), INFINITE);
     return 0;
 }

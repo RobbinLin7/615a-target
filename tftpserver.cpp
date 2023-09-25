@@ -31,7 +31,7 @@ void TftpServer::startTftpServer(){
             std::regex r_LCI(pattern);
             if(std::regex_search(fileName, r_LCI) == true){
                 std::cout << "LCI MATCH SUCCESS" << std::endl;
-                std::string path = "../tmp/" + fileName;
+                std::string path = "./tmp/" + fileName;
                 this->sendFile(path, socket.getFrom());
                 TftpClient* tftpClient = new TftpClient();
                 sockaddr_in addr;
