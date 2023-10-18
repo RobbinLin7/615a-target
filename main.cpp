@@ -1,12 +1,22 @@
-//#include "locker.h"
+#include "locker.h"
 #include "socket.h"
 #include "thread.h"
-
 #include "tftpserver.h"
-//#include "arinc615a.h"
+#include "tftpclient.h"
+#include "arinc615a.h"
 #include<iostream>
 #include<fstream>
 #include<regex>
+#include<queue>
+#include<map>
+
+const size_t max_tftpClient_cnt = 2;
+TftpClient tftpClients[max_tftpClient_cnt];  //tftpClient池
+cond gotNewJob;
+std::queue<Job> jobs;                       //任务队列
+std::map<sockaddr_in, cond> conds;
+
+
 void* initTftpServer(void*){
     TftpServer* server = TftpServer::getTFTPServerInstance();
     server->startTftpServer();
@@ -59,9 +69,5 @@ DWORD func(LPVOID) {
 int main(){
     thread tftpServer_thread((MyThreadFunction)initTftpServer);
     thread findServer_thread((MyThreadFunction)initfindServer);
-    //Sleep(100000);
-    //thread thread(func);
-    WaitForSingleObject(tftpServer_thread.getHandle(), INFINITE);
-    WaitForSingleObject(findServer_thread.getHandle(), INFINITE);
     return 0;
 }

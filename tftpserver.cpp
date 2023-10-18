@@ -1,5 +1,7 @@
 #include "tftpserver.h"
 #include "tftpclient.h"
+#include "thread.h"
+#include "arinc615a.h"
 TftpServer* TftpServer::tftpServerInstance = nullptr;
 void func(sockaddr_in* addr);
 TftpServer::TftpServer(){
@@ -27,31 +29,39 @@ void TftpServer::startTftpServer(){
         case TftpServer::tftpReadRequest:{
             /* code */
             std::cout << "tftpReadRequest " <<  fileName  << " " << fileName.size() << std::endl;
-            std::string pattern("\\.LCI$");
-            std::regex r_LCI(pattern);
+            std::string pattern_LCI("\\.LCI$");
+            std::regex r_LCI(pattern_LCI);
+            std::string pattern_LUI("\\.LUI$");
+            std::regex r_LUI(pattern_LUI);
             if(std::regex_search(fileName, r_LCI) == true){
+                std::shared_ptr<cond> m_cond = std::shared_ptr<cond>(new cond());
+                conds[*socket.getFrom()] = *m_cond;
+                thread informationThread((MyThreadFunction)Arinc615a::information);
                 std::cout << "LCI MATCH SUCCESS" << std::endl;
                 std::string path = "./tmp/" + fileName;
                 this->sendFile(path, socket.getFrom());
-                TftpClient* tftpClient = new TftpClient();
+                m_cond->signal();
+                std::shared_ptr<TftpClient> tftpClient = std::shared_ptr<TftpClient>(new TftpClient());
+                //TftpClient* tftpClient = new TftpClient();
                 sockaddr_in addr;
                 addr.sin_family = AF_INET;
                 addr.sin_port = htons(8888);
                 addr.sin_addr = socket.getFrom()->sin_addr;
-                func(&addr);
-                //path = "../tmp/"
                 tftpClient->sendFile("02DA.LCL", &addr);
-                //makeTftpWriteRequestPacket(tftpPacket, "02DA.LCL");
-                //path = "../tmp/02DA.LCL";
-                //std::cout << "02DA.LCL make success" << std::endl;
-                //this->sen
-                //this->sendFile(path, socket.getFrom);
+            }
+            else if (std::regex_search(fileName, r_LUI) == true) {
+                std::cout << "LUI MATCH SUCCESS" << std::endl;
+                std::string path = "./tmp/" + fileName;
+                this->sendFile(path, socket.getFrom());
             }
             break;
         }
-        case TftpServer::tftpWriteRequest:
+        case TftpServer::tftpWriteRequest: {
             std::cout << "tftpWriteRequest" << std::endl;
+            std::shared_ptr<TftpClient> tftpClient = std::shared_ptr<TftpClient>(new TftpClient());
+            //tftpClient->receiveFile()
             break;
+        }
         case TftpServer::tftpData:
             std::cout << "tftpData" << std::endl;
             break;

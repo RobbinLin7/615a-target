@@ -3,6 +3,7 @@
 #include <string>
 #include "socket.h"
 #include "tftp.h"
+#include "global.h"
 #include <regex>
 const uint16_t tftp_server_port = 69;
 class TftpServer: public Tftp{

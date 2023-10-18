@@ -1,7 +1,7 @@
 #ifndef _THREAD_H_
 #define _THREAD_H_
 #include<iostream>
-#ifdef UNIX
+#ifdef linux
 #include<pthread.h>
 typedef pthread_t thread_t;
 typedef void*(*MyThreadFunction)(void*); 
@@ -22,7 +22,7 @@ private:
 #endif // _WIN32
 
 public:
-#ifdef UNIX
+#ifdef linux
     thread(void* (*func)(void* args)) {
         this->func = func;
         pthread_create(&m_pthread, NULL, func, NULL);
@@ -31,7 +31,7 @@ public:
         pthread_join(m_pthread, NULL);
         std::cout << "in ~thread" << std::endl;
     }
-#else
+#elif _WIN32
     thread(MyThreadFunction func) {
         hThread = CreateThread(NULL, 0, func, 0, 0, &threadId);
         if (hThread == NULL) {
@@ -43,6 +43,7 @@ public:
         return hThread;
     }
     ~thread() {
+        WaitForSingleObject(hThread, INFINITE);
         CloseHandle(hThread);
     }
 #endif

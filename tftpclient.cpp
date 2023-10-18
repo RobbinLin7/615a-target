@@ -62,3 +62,19 @@ void TftpClient::sendFile(const std::string &fileName, const sockaddr_in *target
 void TftpClient::receiveFile(const std::string &fileName, const sockaddr_in *targetAddr){
 
 }
+
+void TftpClient::run() {
+    while (true) {
+        while (jobs.empty() == true) {
+            gotNewJob.wait();
+        }
+        Job job = jobs.front();
+        jobs.pop();
+        if (job.getJobType() == Job::send) {
+            sendFile(job.getFileName(), &job.getTargetAddr());
+        }
+        else if (job.getJobType() == Job::receive) {
+            receiveFile(job.getFileName(), &job.getTargetAddr());
+        }
+    }
+}

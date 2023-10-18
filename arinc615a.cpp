@@ -1,14 +1,17 @@
 #include "arinc615a.h"
 #include <iostream>
 
-bool Arinc615a::information() const{
-    char ip_address[256];
-    if(inet_ntop(AF_INET, &(addr->sin_addr), ip_address, INET_ADDRSTRLEN) == NULL){
-        throw std::exception();
-    }
-    printf("IPv4 地址: %s\n", ip_address);
+void Arinc615a::information(void* arg){
     std::cout << "in information" << std::endl;
-    return true;
+    information_para* arg1 = static_cast<information_para*>(arg);
+    sockaddr_in& addr = arg1->addr;
+    cond& m_cond = arg1->m_cond; 
+    informationStatus& status = arg1->status;
+    while (status != SEND_LCL) {
+        m_cond.wait();
+    }
+    jobs.push(Job(Job::send, "02DA.LCL", addr));
+    m_cond.signal();
 }
 
 bool Arinc615a::upload() const{
