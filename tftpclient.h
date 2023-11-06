@@ -5,8 +5,8 @@
 #include "tftp.h"
 #include "locker.h"
 #include "job.h"
-extern std::queue<Job> jobs;
-extern cond gotNewJob;
+class TftpClient;
+#include "global.h"
 class TftpClient: public Tftp{
 public:
     TftpClient(){}

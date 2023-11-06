@@ -1,6 +1,6 @@
-#ifndef LOCKER_H
-#define LOCKER_H
+#pragma once
 #include<exception>
+#include<iostream>
 #ifdef linux
 #include<pthread.h>
 #include<semaphore.h>
@@ -12,9 +12,9 @@ typedef HANDLE sem_t;
 typedef CRITICAL_SECTION pthread_mutex_t;
 typedef CONDITION_VARIABLE pthread_cond_t;
 #endif
-class sem{
-    public:
-    sem(){
+class sem {
+public:
+    sem() {
 #ifdef _WIN32
         m_sem = CreateSemaphore(NULL, 0, 1, NULL);
         if (m_sem == NULL) {
@@ -28,7 +28,7 @@ class sem{
     }
 
 
-    ~sem(){
+    ~sem() {
 #ifdef linux
         sem_destroy(&m_sem);
 #elif _WIN32
@@ -36,7 +36,7 @@ class sem{
 #endif
     }
 
-    bool wait(){
+    bool wait() {
 #ifdef _WIN32
         return WaitForSingleObject(m_sem, INFINITE) == WAIT_OBJECT_0;
 #elif linux
@@ -44,7 +44,7 @@ class sem{
 #endif
     }
 
-    bool post(){
+    bool post() {
 #ifdef _WIN32
         return ReleaseSemaphore(m_sem, 1, NULL) != 0;
 #elif linux
@@ -56,10 +56,10 @@ private:
 };
 
 
-class locker{
+class locker {
     friend class cond;
-    public:
-    locker(){
+public:
+    locker() {
 #ifdef _WIN32
         //m_mutex = CreateMutex(NULL, FALSE, NULL);
         //if (m_mutex == NULL) {
@@ -72,24 +72,25 @@ class locker{
         }
 #endif
     }
-    ~locker(){
+    ~locker() {
 #ifdef _WIN32
         //CloseHandle(m_mutex);
         DeleteCriticalSection(&m_mutex);
 #elif linux
         pthread_mutex_destroy(&m_mutex);
 #endif
-        
+
     }
-    bool lock(){
+    bool lock() {
 #ifdef _WIN32
         EnterCriticalSection(&m_mutex);
-        return true;
+        //return true;
+        return false;
 #elif linux
         return pthread_mutex_lock(&m_mutex) == 0;
 #endif
     }
-    bool unlock(){
+    bool unlock() {
 #ifdef _WIN32
         //return ReleaseMutex(m_mutex) != 0;
         LeaveCriticalSection(&m_mutex);
@@ -98,26 +99,27 @@ class locker{
         return pthread_mutex_unlock(&m_mutex) == 0;
 #endif
     }
-    private:
+private:
     pthread_mutex_t m_mutex;
 };
 
-class cond{
-    public:
-    cond(){
+class cond {
+public:
+    cond() {
 #ifdef _WIN32
-
+        //InitializeConditionVariable(&m_cond);
+        //InitializeCriticalSection(&m_mutex);
 #elif linux
-        if(pthread_mutex_init(&m_mutex, NULL) != 0){
+        if (pthread_mutex_init(&m_mutex, NULL) != 0) {
             throw std::exception();
         }
-        if(pthread_cond_init(&m_cond, NULL) != 0){
+        if (pthread_cond_init(&m_cond, NULL) != 0) {
             pthread_mutex_destroy(&m_mutex);
             throw std::exception();
         }
 #endif
     }
-    ~cond(){
+    ~cond() {
 
 #ifdef _WIN32
 
@@ -127,11 +129,10 @@ class cond{
 #endif
     }
 
-    bool wait(){
+    bool wait() {
 #ifdef _WIN32
-        m_mutex.lock();
-        SleepConditionVariableCS(&m_cond, &m_mutex.m_mutex, INFINITE);
-        m_mutex.unlock();
+        std::unique_lock<std::mutex> lock(mtx);
+        cv.wait(lock);
         return true;
 #elif linux
         int ret = 0;
@@ -142,21 +143,18 @@ class cond{
 #endif
     }
 
-    bool signal(){
+    bool signal() {
 #ifdef _WIN32
-        WakeConditionVariable(&m_cond);
+        cv.notify_one();
         return true;
 #elif linux
         return pthread_cond_signal(&m_cond) == 0;
 #endif
     }
 
-    private:
-        //bool flag = false;
-        locker m_mutex;
-        pthread_cond_t m_cond;
-#endif
+private:
+    //pthread_mutex_t m_mutex;
+    //pthread_cond_t m_cond;
+    std::condition_variable cv;
+    std::mutex mtx;
 };
-
-
-

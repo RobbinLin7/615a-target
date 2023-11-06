@@ -34,25 +34,26 @@ void TftpServer::startTftpServer(){
             std::string pattern_LUI("\\.LUI$");
             std::regex r_LUI(pattern_LUI);
             if(std::regex_search(fileName, r_LCI) == true){
-                std::shared_ptr<cond> m_cond = std::shared_ptr<cond>(new cond());
-                conds[*socket.getFrom()] = *m_cond;
-                thread informationThread((MyThreadFunction)Arinc615a::information);
+                cond* m_cond = new cond();
+                information_para* args = new information_para();
+                args->addr = *socket.getFrom();
+                args->m_cond = m_cond;
+                args->addr.sin_port = htons(8888);
+                conds[*socket.getFrom()] = m_cond;
+                std::thread informationThread((MyThreadFunction)Arinc615a::information, args);
+                informationThread.detach();
                 std::cout << "LCI MATCH SUCCESS" << std::endl;
                 std::string path = "./tmp/" + fileName;
                 this->sendFile(path, socket.getFrom());
                 m_cond->signal();
-                std::shared_ptr<TftpClient> tftpClient = std::shared_ptr<TftpClient>(new TftpClient());
-                //TftpClient* tftpClient = new TftpClient();
-                sockaddr_in addr;
-                addr.sin_family = AF_INET;
-                addr.sin_port = htons(8888);
-                addr.sin_addr = socket.getFrom()->sin_addr;
-                tftpClient->sendFile("02DA.LCL", &addr);
+                std::cout << "m_cond->signal() success" << std::endl;    
             }
             else if (std::regex_search(fileName, r_LUI) == true) {
+                cond* m_cond = new cond();
                 std::cout << "LUI MATCH SUCCESS" << std::endl;
                 std::string path = "./tmp/" + fileName;
                 this->sendFile(path, socket.getFrom());
+
             }
             break;
         }
