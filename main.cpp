@@ -60,10 +60,10 @@ void* initfindServer(void*){
     return NULL;
 }
 
-DWORD func(LPVOID) {
-    std::cout << "hello world123456\n";
-    return 1;
-}
+//DWORD func(LPVOID) {
+    //std::cout << "hello world123456\n";
+    //return 1;
+//}
 
 
 int main(){
