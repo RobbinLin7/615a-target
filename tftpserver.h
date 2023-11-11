@@ -12,8 +12,8 @@ public:
     static TftpServer* getTFTPServerInstance();
     static void handleTftpReadReuqest();
     static void handleTftpWriteRequest();
-    void sendFile(const std::string& fileName, const sockaddr_in* targetAddr) override;
-    void receiveFile(const std::string& fileName, const sockaddr_in* targetAddr) override;
+    void sendFile(const std::string& fileName, const sockaddr_in* targetAddr);
+    void receiveFile(const std::string& fileName, const sockaddr_in* targetAddr);
 private:
     TftpServer();
     static TftpServer* tftpServerInstance;

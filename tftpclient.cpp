@@ -1,6 +1,7 @@
 #include "tftpclient.h"
 
 void TftpClient::sendFile(const std::string &fileName, const sockaddr_in *targetAddr){
+    tftpPacket.clear();
     makeTftpWriteRequestPacket(tftpPacket, fileName);
     std::string targetTftpPacket;
     std::cout << "send bytes" << socket.sendto(tftpPacket.c_str(), tftpPacket.size(), 0, (sockaddr*)targetAddr, sizeof(sockaddr)) << std::endl;
@@ -22,7 +23,7 @@ void TftpClient::sendFile(const std::string &fileName, const sockaddr_in *target
     char buf[max_tftp_data_len];
     std::ifstream fin;
     try{
-        fin.open("./tmp/" + fileName);
+        fin.open("../tmp/" + fileName);
         size_t count = 1;
         do{
             fin.read(buf, max_tftp_data_len);
@@ -70,11 +71,14 @@ void TftpClient::run() {
         }
         Job job = jobs.front();
         jobs.pop();
+        std::cout << "got new job" << std::endl;
+        sockaddr_in addr = job.getTargetAddr();
         if (job.getJobType() == Job::send) {
-            sendFile(job.getFileName(), &job.getTargetAddr());
+            sendFile(job.getFileName(), &addr);
         }
         else if (job.getJobType() == Job::receive) {
-            receiveFile(job.getFileName(), &job.getTargetAddr());
+            receiveFile(job.getFileName(), &addr);
         }
+        conds[job.getTargetAddr()]->signal();
     }
 }

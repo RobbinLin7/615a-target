@@ -23,17 +23,17 @@ private:
 
 public:
 #ifdef linux
-    thread(void* (*func)(void* args)) {
-        this->func = func;
-        pthread_create(&m_pthread, NULL, func, NULL);
-}
-    ~thread() {
-        pthread_join(m_pthread, NULL);
-        std::cout << "in ~thread" << std::endl;
-    }
+//     thread(void* (*func)(void* args)) {
+//         this->func = func;
+//         pthread_create(&m_pthread, NULL, func, NULL);
+// }
+//     ~thread() {
+//         pthread_join(m_pthread, NULL);
+//         std::cout << "in ~thread" << std::endl;
+//     }
 #elif _WIN32
-    thread(MyThreadFunction func) {
-        hThread = CreateThread(NULL, 0, func, 0, 0, &threadId);
+    thread(MyThreadFunction func, LPVOID args = 0) {
+        hThread = CreateThread(NULL, 0, func, args, 0, &threadId);
         if (hThread == NULL) {
             throw std::exception();
         }

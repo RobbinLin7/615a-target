@@ -1,9 +1,14 @@
-#pragma once
-#include "tftpclient.h"
+#ifndef _GLOBAL_H_
+#define _GLOBAL_H_
+#include "worker.h"
+#include "job.h"
+#include "locker.h"
 #include<queue>
 #include<map>
-extern size_t max_tftpClient_cnt;
-//extern TftpClient tftpClients[max_tftpClient_cnt];  //tftpClient³Ø
+extern const size_t max_worker_cnt;
+extern Worker workers[];  //tftpClientï¿½ï¿½
 extern cond gotNewJob;
-extern std::queue<Job> jobs;                       //ÈÎÎñ¶ÓÁÐ
-extern std::map<sockaddr_in, cond> conds;
+extern std::queue<Job> jobs;                       //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+extern std::map<sockaddr_in, cond*, bool (*)(const sockaddr_in&, const sockaddr_in&)> conds;
+#endif 
+// _GLOBAL_H_

@@ -2,6 +2,7 @@
 #include "tftpclient.h"
 #include "thread.h"
 #include "arinc615a.h"
+#include <thread>
 TftpServer* TftpServer::tftpServerInstance = nullptr;
 void func(sockaddr_in* addr);
 TftpServer::TftpServer(){
@@ -33,33 +34,55 @@ void TftpServer::startTftpServer(){
             std::regex r_LCI(pattern_LCI);
             std::string pattern_LUI("\\.LUI$");
             std::regex r_LUI(pattern_LUI);
+            std::string pattern_LNO("\\.LNO$");
+            std::regex r_LNO(pattern_LNO);
             if(std::regex_search(fileName, r_LCI) == true){
-                std::shared_ptr<cond> m_cond = std::shared_ptr<cond>(new cond());
-                conds[*socket.getFrom()] = *m_cond;
-                thread informationThread((MyThreadFunction)Arinc615a::information);
-                std::cout << "LCI MATCH SUCCESS" << std::endl;
-                std::string path = "./tmp/" + fileName;
-                this->sendFile(path, socket.getFrom());
-                m_cond->signal();
-                std::shared_ptr<TftpClient> tftpClient = std::shared_ptr<TftpClient>(new TftpClient());
-                //TftpClient* tftpClient = new TftpClient();
-                sockaddr_in addr;
-                addr.sin_family = AF_INET;
-                addr.sin_port = htons(8888);
-                addr.sin_addr = socket.getFrom()->sin_addr;
-                tftpClient->sendFile("02DA.LCL", &addr);
+                cond* m_cond = new cond();
+                information_para* args = new information_para();
+                args->addr = *socket.getFrom();
+                args->m_cond = m_cond;
+                //args->addr.sin_port = htons(8888);
+                conds[*socket.getFrom()] = m_cond;
+                std::thread informationThread((MyThreadFunction)Arinc615a::information, args);
+                informationThread.detach();
             }
             else if (std::regex_search(fileName, r_LUI) == true) {
+                cond* m_cond = new cond();
+                upload_para* args = new upload_para();
+                args->addr = *socket.getFrom();
+                args->m_cond = m_cond;
+                conds[*socket.getFrom()] = m_cond;
                 std::cout << "LUI MATCH SUCCESS" << std::endl;
-                std::string path = "./tmp/" + fileName;
-                this->sendFile(path, socket.getFrom());
+                std::thread uploadThread(Arinc615a::upload, args);
+                uploadThread.detach();
+                //this->sendFile(path, socket.getFrom());
+            }
+            else if(std::regex_search(fileName, r_LNO) == true){
+                cond* m_cond = new cond();
+                oDownload_para* args = new oDownload_para();
+                args->addr = *socket.getFrom();
+                args->m_cond = m_cond;
+                conds[*socket.getFrom()] = m_cond;
+                std::cout << "LNO MATCH SUCCESS" << std::endl;
+                std::thread oDownloadThead(Arinc615a::operatorDownload, args);
+                oDownloadThead.detach();
             }
             break;
         }
         case TftpServer::tftpWriteRequest: {
+            std::string pattern_LUR("\\.LUR$");
+            std::regex r_LUR(pattern_LUR);
+            std::string pattern_LNA("\\.LNA$");
+            std::regex r_LNA(pattern_LNA);
             std::cout << "tftpWriteRequest" << std::endl;
-            std::shared_ptr<TftpClient> tftpClient = std::shared_ptr<TftpClient>(new TftpClient());
-            //tftpClient->receiveFile()
+            if(std::regex_search(fileName, r_LUR) == true){
+                jobs.push(Job(Job::receive, Job::server, fileName, *socket.getFrom()));
+                gotNewJob.signal();
+            }
+            else if(std::regex_search(fileName, r_LNA) == true){
+                jobs.push(Job(Job::receive, Job::server, fileName, *socket.getFrom()));
+                gotNewJob.signal();
+            }
             break;
         }
         case TftpServer::tftpData:
@@ -94,7 +117,7 @@ void TftpServer::sendFile(const std::string &fileName, const sockaddr_in* target
             std::string tftpDataPacket;
             makeTftpDataPacket(tftpDataPacket, data, blockNo);
             //这里使用static_cast会报错
-            socket.sendto(tftpDataPacket.c_str(), count, 0, reinterpret_cast<const sockaddr*>(targetAddr), sizeof(sockaddr));
+            socket.sendto(tftpDataPacket.c_str(), count + 4, 0, reinterpret_cast<const sockaddr*>(targetAddr), sizeof(sockaddr));
             
             for(;;){
                 socket.recvfrom(0);
@@ -104,7 +127,7 @@ void TftpServer::sendFile(const std::string &fileName, const sockaddr_in* target
                     std::cout << "not ack type" << std::endl;
                 }
                 else if(num != blockNo){
-                    socket.sendto(tftpDataPacket.c_str(), count, 0, reinterpret_cast<const sockaddr*>(targetAddr), sizeof(sockaddr));
+                    socket.sendto(tftpDataPacket.c_str(), count + 4, 0, reinterpret_cast<const sockaddr*>(targetAddr), sizeof(sockaddr));
                 }
                 else break;
             }

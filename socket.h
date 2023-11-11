@@ -14,7 +14,7 @@ typedef int socklen_t;
 #endif // 
 
 
-#ifdef UNIX
+#ifdef linux
 #include<sys/socket.h>
 #include<netinet/in.h>
 #include<arpa/inet.h>
@@ -22,7 +22,7 @@ typedef int socklen_t;
 #define MY_CLOSE_SOCKET(s) close(s)
 #endif // 
 
-const size_t max_bytes = 512;
+const size_t max_bytes = 1024;
 void func(sockaddr_in* addr);
 class udp_socket{
 public:
@@ -52,7 +52,7 @@ public:
     }
     int recvfrom(int flags){
         
-        // char ip_address[256];
+        //char ip_address[256];
         // if(inet_ntop(AF_INET, &(from.sin_addr), ip_address, INET_ADDRSTRLEN) == NULL){
         //     throw std::exception();
         // }
