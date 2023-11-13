@@ -9,7 +9,9 @@ private:
 public:
     static int i;
     int id;
-    Worker():id(++i){}
+    Worker():id(++i){
+        tftp.socket.setRecvTimeout(3, 0);
+    }
     void run();
 };
 #endif

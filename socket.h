@@ -34,7 +34,7 @@ public:
             throw std::exception();
         }
 #endif
-        sockfd = socket(AF_INET, SOCK_DGRAM, 0); 
+        sockfd = socket(AF_INET, SOCK_DGRAM, 0);
         std::cout << sockfd << std::endl;
     }
     ~udp_socket(){
@@ -56,7 +56,14 @@ public:
         // if(inet_ntop(AF_INET, &(from.sin_addr), ip_address, INET_ADDRSTRLEN) == NULL){
         //     throw std::exception();
         // }
-        // printf("IPv4 地址: %s\n", ip_address); 
+        // printf("IPv4 地址: %s\n", ip_address);
+        // ssize_t count = ::recvfrom(sockfd, buff, max_bytes, flags, (sockaddr*)&from, &addrlen);
+        // if(count == -1){
+        //     if(errno == EWOULDBLOCK || errno == EAGAIN){
+        //         std::cout << "receive timeout" << std::endl;
+        //     }
+        // }
+        // return count; 
         return count = ::recvfrom(sockfd, buff, max_bytes, flags, (sockaddr*)&from, &addrlen);
     }
 
@@ -75,6 +82,11 @@ public:
 
     std::string getBuff(){
         return std::string(buff, count);
+    }
+
+    bool setRecvTimeout(time_t sec, time_t m_second){
+        struct timeval timeout{sec, m_second}; //设置超时时间3秒钟
+        setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)); 
     }
 private:
     int sockfd;

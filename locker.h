@@ -89,6 +89,7 @@ public:
     }
 
     bool signal() {
+        std::unique_lock<std::mutex> lock(mtx);
         cv.notify_one();
         return true;
     }

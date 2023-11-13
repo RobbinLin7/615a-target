@@ -12,7 +12,7 @@ void Arinc615a::information(information_para* arg){
     while(arg->status != information_para::END){
         switch (arg->status){
         case information_para::SEND_LCI:
-            jobs.push(Job(Job::send, Job::server, "../tmp/02DA.LCI", addr));
+            jobs.push(Job(Job::send, Job::server, "./tmp/02DA.LCI", addr));
             gotNewJob.signal();
             m_cond->wait();
             arg->status = information_para::SEND_LCL;
@@ -326,5 +326,4 @@ void Arinc615a::parseLNA(oDownload_para *arg){
         }
         ifs.close();
     }
-
 }

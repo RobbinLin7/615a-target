@@ -142,7 +142,13 @@ void Tftp::sendFileAsClient(const std::string& fileName, const sockaddr_in* targ
     std::string targetTftpPacket;
     std::cout << "send bytes" << socket.sendto(tftpPacket.c_str(), tftpPacket.size(), 0, (sockaddr*)targetAddr, sizeof(sockaddr)) << std::endl;
     for(;;){
-        socket.recvfrom(0);
+        while(socket.recvfrom(0) < 0){
+            if(errno == EWOULDBLOCK || errno == EAGAIN){
+                std::cout << "receive fileName timeout" << std::endl;
+            }
+            socket.sendto(tftpPacket.c_str(), tftpPacket.size(), 0, (sockaddr*)targetAddr, sizeof(sockaddr_in));
+        }
+        //socket.recvfrom(0);
         targetTftpPacket = socket.getBuff();
         tftpType type = parseTftpPacket(targetTftpPacket, this->fileName, mode, num);
         if(type != tftpAck){
@@ -174,7 +180,13 @@ void Tftp::sendFileAsClient(const std::string& fileName, const sockaddr_in* targ
             socket.sendto(tftpDataPacket.c_str(), count + 4, 0);
             
             for(;;){
-                socket.recvfrom(0);
+                //socket.recvfrom(0);
+                while (socket.recvfrom(0) < 0){
+                    if (errno == EWOULDBLOCK || errno == EAGAIN){
+                        std::cout << "receive fileName timeout" << std::endl;
+                    }
+                    socket.sendto(tftpPacket.c_str(), tftpPacket.size(), 0, (sockaddr *)targetAddr, sizeof(sockaddr_in));
+                }
                 tftpPacket = socket.getBuff();
                 tftpType type = parseTftpPacket(tftpPacket, this->fileName, mode, num);
                 if(type != tftpAck){
@@ -209,7 +221,12 @@ void Tftp::receiveFileAsClient(const std::string& fileName, const sockaddr_in* t
     block_t blockNo = 1;
     char buf[max_tftp_data_len];
     for(;;){
-        socket.recvfrom(0);
+        while(socket.recvfrom(0) < 0){
+            if(errno == EWOULDBLOCK || errno == EAGAIN){
+                std::cout << "receive fileName timeout" << std::endl;
+            }
+            socket.sendto(tftpPacket.c_str(), tftpPacket.size(), 0, (sockaddr*)targetAddr, sizeof(sockaddr_in));
+        }
         targetAddr = socket.getFrom();
         targetTftpPacket = socket.getBuff();
         tftpType type = parseTftpPacket(targetTftpPacket, this->fileName, mode, num);
@@ -244,7 +261,13 @@ void Tftp::receiveFileAsServer(const std::string& fileName, const sockaddr_in* t
     block_t blockNo = 1;
     char buf[max_tftp_data_len];
     for(;;){
-        socket.recvfrom(0);
+        while(socket.recvfrom(0) < 0){
+            if(errno == EWOULDBLOCK || errno == EAGAIN){
+                std::cout << "receive fileName timeout" << std::endl;
+            }
+            socket.sendto(tftpPacket.c_str(), tftpPacket.size(), 0, (sockaddr*)targetAddr, sizeof(sockaddr_in));
+        }
+        //socket.recvfrom(0);
         targetTftpPacket = socket.getBuff();
         tftpType type = parseTftpPacket(targetTftpPacket, this->fileName, mode, num);
         if(type != tftpData){
