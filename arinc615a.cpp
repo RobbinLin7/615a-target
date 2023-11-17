@@ -53,7 +53,6 @@ void Arinc615a::upload(upload_para* arg){
                 break;
             }
             case upload_para::WRITE_LUS:{
-
                 makeLUS(arg);
                 jobs.push(Job(Job::send, Job::client, "02DA.LUS", target_server_addr));
                 gotNewJob.signal();
@@ -68,12 +67,16 @@ void Arinc615a::upload(upload_para* arg){
                         arg->status = upload_para::END;
                         break;
                     case 0x1003:
+                        std::cout << "0x1003" << std::endl;
                         break;
                     case 0x1004:
+                        std::cout << "0x1004" << std::endl;
                         break;
                     case 0x1005:
+                        std::cout << "0x1005" << std::endl;
                         break;
                     default:
+                        std::cout << "default" << std::endl;
                         break;
                 }
                 break;
