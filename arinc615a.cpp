@@ -12,7 +12,11 @@ void Arinc615a::information(information_para* arg){
     while(arg->status != information_para::END){
         switch (arg->status){
         case information_para::SEND_LCI:
+//<<<<<<< HEAD
             jobs.push(Job(Job::send, Job::server, "02DA.LCI", addr));
+//=======
+            //jobs.push(Job(Job::send, Job::server, "./tmp/02DA.LCI", addr));
+//>>>>>>> 9953ffaca2e91362743a759e3b91c6e1c69f0979
             gotNewJob.signal();
             m_cond->wait();
             arg->status = information_para::SEND_LCL;
@@ -53,7 +57,6 @@ void Arinc615a::upload(upload_para* arg){
                 break;
             }
             case upload_para::WRITE_LUS:{
-
                 makeLUS(arg);
                 jobs.push(Job(Job::send, Job::client, "02DA.LUS", target_server_addr));
                 gotNewJob.signal();
@@ -80,6 +83,7 @@ void Arinc615a::upload(upload_para* arg){
                         std::cout << "0x1005" << std::endl;
                         break;
                     default:
+                        std::cout << "default" << std::endl;
                         break;
                 }
                 break;
@@ -333,5 +337,4 @@ void Arinc615a::parseLNA(oDownload_para *arg){
         }
         ifs.close();
     }
-
 }
