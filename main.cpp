@@ -11,7 +11,7 @@
 #include<queue>
 #include<map>
 #include<thread>
-
+std::mutex mtx;
 const size_t max_worker_cnt = 5;
 Worker workers[max_worker_cnt];
 //TftpClient tftpClients[max_tftpClient_cnt];  //tftpClient池

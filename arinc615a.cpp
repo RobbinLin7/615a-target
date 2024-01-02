@@ -12,7 +12,7 @@ void Arinc615a::information(information_para* arg){
     while(arg->status != information_para::END){
         switch (arg->status){
         case information_para::SEND_LCI:
-            jobs.push(Job(Job::send, Job::server, "../tmp/02DA.LCI", addr));
+            jobs.push(Job(Job::send, Job::server, "02DA.LCI", addr));
             gotNewJob.signal();
             m_cond->wait();
             arg->status = information_para::SEND_LCL;
@@ -59,19 +59,25 @@ void Arinc615a::upload(upload_para* arg){
                 gotNewJob.signal();
                 switch(arg->statusCode){
                     case 0x0001:
+                        std::cout << "0x0001" << std::endl;
                         arg->status = upload_para::RECEIVE_LUR;
                         break;
                     case 0x0002:
+                        std::cout << "0x0002" << std::endl;
                         arg->status = upload_para::READ_DATA_FILE;
                         break;
                     case 0x0003:
+                        std::cout << "0x0003" << std::endl;
                         arg->status = upload_para::END;
                         break;
                     case 0x1003:
+                        std::cout << "0x1003" << std::endl;
                         break;
                     case 0x1004:
+                        std::cout << "0x1004" << std::endl;
                         break;
                     case 0x1005:
+                        std::cout << "0x1005" << std::endl;
                         break;
                     default:
                         break;
@@ -145,6 +151,7 @@ void Arinc615a::operatorDownload(oDownload_para* arg){
                         arg->status = oDownload_para::END;
                         break;
                     default:
+                        std::cout << "oDownload default ...." << std::endl;
                         break;
                 }
                 break;
@@ -187,7 +194,7 @@ void Arinc615a::operatorDownload(oDownload_para* arg){
 
 
 void Arinc615a::makeLUS(upload_para* arg){
-    std::ofstream os("./tmp/02DA.LUS", std::ios_base::trunc);
+    std::ofstream os("./tmp/02DA.LUS", std::ios_base::trunc | std::ios_base::binary);
     if(os){
         os.seekp(4);
         os << "A3";
@@ -227,14 +234,14 @@ void Arinc615a::parseLUH(upload_para *arg){
             ifs.read(&fileName[0], fileNameLen);
             arg->fileList.push_back(fileName);
             std::cout << fileName << std::endl;
-            ifs.seekg(now + 789);
+            ifs.seekg(789 + now);
         }
         ifs.close();
     }
 }
 
 void Arinc615a::makeLNS(oDownload_para *arg){
-    std::ofstream os("./tmp/02DA.LNS", std::ios_base::trunc);
+    std::ofstream os("./tmp/02DA.LNS", std::ios_base::trunc | std::ios_base::trunc);
     if(os){
         os.seekp(4);
         os << "A3";
@@ -275,7 +282,7 @@ void Arinc615a::makeLNL(oDownload_para *arg){
         if(entry.exists()){
             std::filesystem::directory_iterator list("./tmp");
             for(auto it : list){
-                arg->fileList.push_back(it.path().filename());
+                arg->fileList.push_back(it.path().filename().string());
                 if(it.is_directory()){
                     arg->fileType.push_back("directorys");
                 }
@@ -290,12 +297,12 @@ void Arinc615a::makeLNL(oDownload_para *arg){
             ofs << (unsigned char)arg->fileList[i].size();
             auto cur = ofs.tellp();
             ofs << arg->fileList[i];
-            ofs.seekp(cur + 255);
+            ofs.seekp(255 + cur);
             ofs << (unsigned char)arg->fileType[i].size();
             cur = ofs.tellp();
             ofs << arg->fileType[i];
             if(i < arg->fileList.size() - 1){
-                ofs.seekp(cur + 255);
+                ofs.seekp(255 + cur);
             }
         }
         auto size = ofs.tellp();
@@ -306,7 +313,7 @@ void Arinc615a::makeLNL(oDownload_para *arg){
 }
 
 void Arinc615a::parseLNA(oDownload_para *arg){
-    std::ifstream ifs("./tmp/02DA.LNA");
+    std::ifstream ifs("./tmp/02DA.LNA", std::ios_base::binary);
     if(ifs){
         //ifs.seekg(4);
         unsigned fileLen;

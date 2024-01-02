@@ -6,6 +6,7 @@ class Job {
 public:
     enum JobType { send, receive };
     enum Role {client, server};
+    Job() {}
     Job(JobType jobType, Role role, std::string fileName, sockaddr_in addr): jobType(jobType), role(role),
     fileName(fileName), targetAddr(addr) {}
     std::string getFileName() {
